@@ -6,6 +6,7 @@ from sys import prefix
 import pandas as pd
 from sqlalchemy import create_engine
 from tqdm.auto import tqdm
+import click    
 
 
 dtype = {
@@ -32,17 +33,17 @@ parse_dates = [
     "tpep_dropoff_datetime"
 ]
 
-def run():
-    pg_user = "root"
-    pg_pass = "root"
-    pg_host = "localhost"
-    pg_port = "5432"
-    pg_db = "ny_taxi"
-
-    year = 2021
-    month = 1
-    chunksize = 100000
-    target_table = "yellow_taxi_data"
+@click.command()
+@click.option('--pg_user', default='root', help='PostgreSQL user')
+@click.option('--pg_pass', default='root', help='PostgreSQL password')
+@click.option('--pg_host', default='localhost', help='PostgreSQL host')
+@click.option('--pg_port', default='5432', help='PostgreSQL port')
+@click.option('--pg_db', default='ny_taxi', help='PostgreSQL database')
+@click.option('--year', default=2021, type=int, help='Year')
+@click.option('--month', default=1, type=int, help='Month')
+@click.option('--chunksize', default=100000, type=int, help='Chunk size')
+@click.option('--target_table', default='yellow_taxi_data', help='Target table')
+def run(pg_user, pg_pass, pg_host, pg_port, pg_db, year, month, chunksize, target_table):
 
     prefix = 'https://github.com/DataTalksClub/nyc-tlc-data/releases/download/yellow/'
     url =f"{prefix}/yellow_tripdata_{year}-{month:02d}.csv.gz"
@@ -61,13 +62,13 @@ def run():
     for df_chunk in tqdm(df_iter):
         if first:
             df_chunk.head(n=0).to_sql(
-                name='target_table', 
+                name=target_table, 
                 con=engine, 
                 if_exists='replace'
                 )
             first = False
         df_chunk.to_sql(
-            name='target_table', 
+            name=target_table, 
             con=engine, 
             if_exists='append'
             )
